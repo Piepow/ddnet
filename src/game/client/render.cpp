@@ -384,8 +384,38 @@ void CRenderTools::RenderTee(CAnimState *pAnim, CTeeRenderInfo *pInfo, int Emote
 					float EyeSeparation = (0.075f - 0.010f*absolute(Direction.x))*BaseSize;
 					vec2 Offset = vec2(Direction.x*0.125f, -0.05f+Direction.y*0.10f)*BaseSize;
 
-					Graphics()->RenderQuadContainerAsSprite(m_TeeQuadContainerIndex, QuadOffset + EyeQuadOffset, BodyPos.x - EyeSeparation + Offset.x, BodyPos.y + Offset.y, EyeScale / (64.f*0.4f), h / (64.f*0.4f));
-					Graphics()->RenderQuadContainerAsSprite(m_TeeQuadContainerIndex, QuadOffset + EyeQuadOffset, BodyPos.x + EyeSeparation + Offset.x, BodyPos.y + Offset.y, -EyeScale / (64.f*0.4f), h / (64.f*0.4f));
+					vec2 LeftOffset = vec2(
+						g_Config.m_ClLeftEyePositionX * AnimScale,
+						g_Config.m_ClLeftEyePositionY * AnimScale
+					);
+
+					vec2 RightOffset = vec2(
+						g_Config.m_ClRightEyePositionX * AnimScale,
+						g_Config.m_ClRightEyePositionY * AnimScale
+					);
+
+					float LeftRotation = g_Config.m_ClLeftEyeRotation / 1000.0f;
+					float RightRotation = g_Config.m_ClRightEyeRotation / 1000.0f;
+
+					Graphics()->QuadsSetRotation(LeftRotation);
+					Graphics()->RenderQuadContainerAsSprite(
+						m_TeeQuadContainerIndex,
+						QuadOffset + EyeQuadOffset,
+						BodyPos.x - EyeSeparation + Offset.x + LeftOffset.x,
+						BodyPos.y + Offset.y + LeftOffset.y,
+						EyeScale / (64.f*0.4f),
+						h / (64.f*0.4f)
+					);
+
+					Graphics()->QuadsSetRotation(RightRotation);
+					Graphics()->RenderQuadContainerAsSprite(
+						m_TeeQuadContainerIndex,
+						QuadOffset + EyeQuadOffset,
+						BodyPos.x + EyeSeparation + Offset.x + RightOffset.x,
+						BodyPos.y + Offset.y + RightOffset.y,
+						-EyeScale / (64.f*0.4f),
+						h / (64.f*0.4f)
+					);
 				}
 			}
 
@@ -397,7 +427,24 @@ void CRenderTools::RenderTee(CAnimState *pAnim, CTeeRenderInfo *pInfo, int Emote
 
 			int QuadOffset = 7;
 
-			Graphics()->QuadsSetRotation(pFoot->m_Angle*pi*2);
+			float Angle = pFoot->m_Angle * pi * 2;
+			vec2 FootPosition = Position;
+
+			if (f) {
+				Angle += g_Config.m_ClFrontFootRotation / 1000.0f;
+				FootPosition.x +=
+					(g_Config.m_ClFrontFootPositionX + pFoot->m_X) * AnimScale;
+				FootPosition.y +=
+					(g_Config.m_ClFrontFootPositionY + pFoot->m_Y) * AnimScale;
+			} else {
+				Angle += g_Config.m_ClBackFootRotation / 1000.0f;
+				FootPosition.x +=
+					(g_Config.m_ClBackFootPositionX + pFoot->m_X) * AnimScale;
+				FootPosition.y +=
+					(g_Config.m_ClBackFootPositionY + pFoot->m_Y) * AnimScale;
+			}
+
+			Graphics()->QuadsSetRotation(Angle);
 
 			bool Indicate = !pInfo->m_GotAirJump && g_Config.m_ClAirjumpindicator;
 			float cs = 1.0f; // color scale
@@ -411,7 +458,13 @@ void CRenderTools::RenderTee(CAnimState *pAnim, CTeeRenderInfo *pInfo, int Emote
 
 			Graphics()->SetColor(pInfo->m_ColorFeet.r*cs, pInfo->m_ColorFeet.g*cs, pInfo->m_ColorFeet.b*cs, Alpha);
 
-			Graphics()->RenderQuadContainerAsSprite(m_TeeQuadContainerIndex, QuadOffset, Position.x + pFoot->m_X*AnimScale, Position.y + pFoot->m_Y*AnimScale, w / 64.f, h / 32.f);
+			Graphics()->RenderQuadContainerAsSprite(
+				m_TeeQuadContainerIndex,
+				QuadOffset,
+				FootPosition.x,
+				FootPosition.y,
+				w / 64.f, h / 32.f
+			);
 		}
 	}
 
